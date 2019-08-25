@@ -19,6 +19,11 @@ def get_ip_list(f_name='data.txt'):
     return ip_list
 
 
+def save_result(ip, status, listing_risk):
+    with open('results.txt', 'a+') as file:
+        file.write('{} | {} | {}\n'.format(ip, status, listing_risk))
+
+
 def get_subchannel():
     r = session.get(ENPOINT)
     soup = BeautifulSoup(r.content, 'html.parser')
@@ -50,10 +55,14 @@ def crawler(ip_address):
 def main():
     ip_list = get_ip_list()
     for ip_address in ip_list:
+        print('='*30)
         print('Checking: {}'.format(ip_address))
         ip, status, listing_risk = crawler(ip_address)
         print('{} | {} | {}'.format(ip, status, listing_risk))
+        print('='*30)
+        save_result(ip, status, listing_risk)
         # wait
+        print('\nWait {} seconds until next!\n'.format(WAIT_TIME))
         sleep(WAIT_TIME)
 
 
