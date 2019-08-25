@@ -1,10 +1,14 @@
 from time import sleep
 
-import requests
 from bs4 import BeautifulSoup
+from requests import Session
 
 ENPOINT = 'http://www.uceprotect.net/en/rblcheck.php'
-wait_time = 60  # seconds
+WAIT_TIME = 60  # seconds
+
+session = Session()
+session.headers.update(
+    {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:12.0) Gecko/20100101 Firefox/12.0'})
 
 
 def get_ip_list(f_name='data.txt'):
@@ -15,16 +19,24 @@ def get_ip_list(f_name='data.txt'):
     return ip_list
 
 
+def get_subchannel():
+    r = session.get(ENPOINT)
+    soup = BeautifulSoup(r.content, 'html.parser')
+    subchannel_input = soup.find('input', {'name': 'subchannel'})
+    subchannel = subchannel_input.get('value')
+    return subchannel
+
+
 def crawler(ip_address):
     if not ip_address:
         return
+    subchannel = get_subchannel()
     data = {
         'whattocheck': 'IP',
         'ipr': ip_address,
-        'subchannel': '6b583eebda3',
+        'subchannel': subchannel,
     }
-    r = requests.post(ENPOINT, data=data)
-    print(r.content)
+    r = session.post(ENPOINT, data=data)
     soup = BeautifulSoup(r.content, 'html.parser')
     table = soup.find('table', {'class': 'db'})
     row = table.find_all('tr')[1]
@@ -42,7 +54,7 @@ def main():
         ip, status, listing_risk = crawler(ip_address)
         print('{} | {} | {}'.format(ip, status, listing_risk))
         # wait
-        sleep(wait_time)
+        sleep(WAIT_TIME)
 
 
 if __name__ == '__main__':
